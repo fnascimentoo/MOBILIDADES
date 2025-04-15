@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8" />
+  <title>Mapa Interativo por Município</title>
+  <link rel="stylesheet" href="css/estilo.css" />
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <script src="https://unpkg.com/topojson-client@3"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+    }
+    #controls {
+      margin-bottom: 10px;
+    }
+    #mapa {
+      border: 1px solid #ccc;
+    }
+
+    #container-mapa {
+      position: relative;
+      width: fit-content;
+    }
+
+    .legenda {
+      position: absolute;
+      top: 410px;
+      left: 980px;
+      font-size: 12px;
+      padding: 10px 15px;
+      background: white;
+      border: 1px solid #ddd;
+      white-space: nowrap;
+      box-shadow: 0px 0px 5px rgba(0,0,0,0.1);
+    }
+
+    .legenda-item {
+      display: flex;
+      align-items: center;
+      margin-bottom: 5px;
+    }
+    .legenda-cor {
+      width: 20px;
+      height: 20px;
+      margin-right: 8px;
+      border: 1px solid #999;
+      opacity: 1; /* transparência */
+    }
+  </style>
+</head>
+<body>
+
+  <h2>MOBILIDADES - Mapa de consulta por municípios</h2>
+
+  <div id="container-mapa">
+    <svg id="mapa" width="960" height="700"></svg>
+  
+    <div id="painel-lateral">
+      <div id="controls">
+        <label for="variavel-select">Variável:</label>
+        <select id="variavel-select">
+          <option value="PRISOES">Prisões</option>
+          <option value="PPRF">PPRF</option>
+          <option value="MOTOS">Motos</option>
+          <option value="ONIBUS">Ônibus</option>
+          <option value="UTILITARIOS">Utilitários</option>
+        </select>
+  
+        <br><br>
+  
+        <label for="periodo-select">Período:</label>
+        <select id="periodo-select">
+          <option value="2000_2010">2000/2001 a 2010</option>
+          <option value="2010_2022">2010 a 2022</option>
+        </select>
+      </div>
+  
+      <div class="legenda" id="legenda"></div>
+    </div>
+  </div>
+
+  <script src="js/mapa.js"></script>
+</body>
+</html>
