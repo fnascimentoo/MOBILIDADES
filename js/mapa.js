@@ -61,7 +61,7 @@ function inicializarSelects() {
 
   const variavelSelect = document.getElementById("variavel-select");
   variavelSelect.innerHTML = "";
-  variaveisPorConfiguracao[configuracao].forEach((v) => {
+  variaveisPorConfiguracao[configuracao].((v) => {
     const opt = document.createElement("option");
     opt.value = v;
     opt.textContent = v;
@@ -101,7 +101,8 @@ function atualizarMapa() {
 
     const dadosPorCod = {};
     dados.forEach((d) => {
-      const cod = String(Math.trunc(d.cod_ibge)).padStart(7, '0');
+      const raw = typeof d.cod_ibge === "string" ? parseFloat(d.cod_ibge) : d.cod_ibge;
+      const cod = String(Math.trunc(raw)).padStart(7, "0");
       dadosPorCod[cod] = d.categoria;
     });
 
