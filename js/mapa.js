@@ -142,6 +142,8 @@ function desenharLegenda(configuracao, variavel) {
   const container = d3.select("#legenda");
   container.selectAll("*").remove();
 
+  const categoriasIncluidas = new Set();
+
   if (configuracao === "correlacao") {
     const legendaCorrelacao = {
       "Abaixo / Abaixo": "#3c78d8",
@@ -152,6 +154,7 @@ function desenharLegenda(configuracao, variavel) {
     };
 
     Object.entries(legendaCorrelacao).forEach(([categoria, cor]) => {
+      categoriasIncluidas.add(categoria);
       const item = container.append("div").attr("class", "legenda-item");
       item.append("div")
         .attr("class", "legenda-cor")
@@ -177,23 +180,22 @@ function desenharLegenda(configuracao, variavel) {
     const termo = correspondencias[variavel];
     const termoEspecifico = labelPersonalizada[variavel] || termo;
 
-    const categoriasIncluidas = new Set();
-
     Object.entries(categoriaCores).forEach(([categoria, cor]) => {
-      // Ignora categorias de correlação
-      if (categoria.includes(" / ") && !categoria.includes("homicídios")) return;
+      // ignora categorias de correlação (que contêm " / " mas não "homicídios")
+      const isCorrelacao = categoria.includes(" / ") &&
+                           !categoria.toLowerCase().includes("homicídios");
 
-      const categoriaLower = categoria.toLowerCase();
+      if (isCorrelacao) return;
 
+      const catLower = categoria.toLowerCase();
       const isGenerica =
-        !categoriaLower.includes("pprf") &&
-        !categoriaLower.includes("prisões") &&
-        !categoriaLower.includes("veículos");
+        !catLower.includes("pprf") &&
+        !catLower.includes("prisões") &&
+        !catLower.includes("veículos");
 
-      const isRelacionada =
-        termo && categoriaLower.includes(termo.toLowerCase());
+      const isRelacionada = termo && catLower.includes(termo.toLowerCase());
 
-      if (isGenerica || isRelacionada) {
+      if (isGenerica || isRelacionada || categoria === "Sem dados") {
         if (!categoriasIncluidas.has(categoria)) {
           categoriasIncluidas.add(categoria);
           const rotulo = categoria.replace("veículos", termoEspecifico);
@@ -205,15 +207,9 @@ function desenharLegenda(configuracao, variavel) {
         }
       }
     });
-
-    // Adiciona manualmente "Sem dados"
-    const item = container.append("div").attr("class", "legenda-item");
-    item.append("div")
-      .attr("class", "legenda-cor")
-      .style("background-color", "lightgray");
-    item.append("span").text("Sem dados");
   }
 }
+
 // Eventos
 document.getElementById("configuracao-select").addEventListener("change", () => {
   inicializarSelects();
