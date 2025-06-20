@@ -181,7 +181,6 @@ function desenharLegenda(configuracao, variavel) {
     const termoEspecifico = labelPersonalizada[variavel] || termo;
 
     Object.entries(categoriaCores).forEach(([categoria, cor]) => {
-      // ignora categorias de correlação (que contêm " / " mas não "homicídios")
       const isCorrelacao = categoria.includes(" / ") &&
                            !categoria.toLowerCase().includes("homicídios");
 
@@ -196,23 +195,22 @@ function desenharLegenda(configuracao, variavel) {
       const isRelacionada = termo && catLower.includes(termo.toLowerCase());
 
       if (isGenerica || isRelacionada || categoria === "Sem dados") {
-          const rotulo = categoria === "Sem dados"
-            ? "Sem dados"
-            : categoria.replace("veículos", termoEspecifico);
-        
-          if (categoriasIncluidas.has(rotulo)) return;
-          categoriasIncluidas.add(rotulo);
-        
-          const item = container.append("div").attr("class", "legenda-item");
-          item.append("div")
-            .attr("class", "legenda-cor")
-            .style("background-color", cor);
-          item.append("span").text(rotulo);
-        }
+        const rotulo = categoria === "Sem dados"
+          ? "Sem dados"
+          : categoria.replace("veículos", termoEspecifico);
+
+        if (categoriasIncluidas.has(rotulo)) return;
+        categoriasIncluidas.add(rotulo);
+
+        const item = container.append("div").attr("class", "legenda-item");
+        item.append("div")
+          .attr("class", "legenda-cor")
+          .style("background-color", cor);
+        item.append("span").text(rotulo);
       }
     });
   }
-
+}
 
 // Eventos
 document.getElementById("configuracao-select").addEventListener("change", () => {
