@@ -1,5 +1,5 @@
-
 const categoriaCores = {
+  // Variação
   "Aumentou (ambos)": "#9f1127",
   "Aumentou (homicídios)": "#df755d",
   "Aumentou (PPRF)": "#fbd2bc",
@@ -17,6 +17,7 @@ const categoriaCores = {
   "Diminuiu (veículos)": "#5aa2c9",
   "Diminuiu (prisões)": "#5aa2c9",
   "Diminuiu (ambos)": "#185898",
+  // Correlação
   "Abaixo / Abaixo": "#3c78d8",
   "Abaixo / Acima": "#16a765",
   "Acima / Abaixo": "#ffad46",
@@ -37,54 +38,91 @@ const zoom = d3.zoom()
 
 svg.call(zoom);
 
+const variaveisPorConfiguracao = {
+  "variacao": ["PRISOES", "PPRF", "MOTOS", "ONIBUS", "UTILITARIOS"],
+  "correlacao": ["DIESEL", "GASOLINA"]
+};
+
+const periodosPorConfiguracao = {
+  "variacao": [
+    { value: "2000_2010", label: "2000/2001 a 2010" },
+    { value: "2010_2022", label: "2010 a 2022" }
+  ],
+  "correlacao": [
+    { value: "2000", label: "2000" },
+    { value: "2010", label: "2010" },
+    { value: "2022", label: "2022" }
+  ]
+};
+
+function inicializarSelects() {
+  const configuracao = document.getElementById("configuracao-select").value;
+
+  const variavelSelect = document.getElementById("variavel-select");
+  variavelSelect.innerHTML = "";
+  variaveisPorConfiguracao[configuracao].forEach(v => {
+    const opt = document.createElement("option");
+    opt.value = v;
+    opt.textContent = v;
+    variavelSelect.appendChild(opt);
+  });
+
+  const periodoSelect = document.getElementById("periodo-select");
+  periodoSelect.innerHTML = "";
+  periodosPorConfiguracao[configuracao].forEach(p => {
+    const opt = document.createElement("option");
+    opt.value = p.value;
+    opt.textContent = p.label;
+    periodoSelect.appendChild(opt);
+  });
+}
+
 function atualizarMapa() {
   g.selectAll("*").remove();
 
-  const configuracao = document.getElementById("configuracao-select")?.value || "variacao";
+  const configuracao = document.getElementById("configuracao-select").value;
   const periodo = document.getElementById("periodo-select").value;
-  const variaveisSelecionadas = Array.from(document.getElementById("variavel-select").selectedOptions).map(o => o.value);
-  if (variaveisSelecionadas.length === 0) return;
+  const variavel = document.getElementById("variavel-select").value;
+  if (!variavel) return;
 
   const promessas = [
     d3.json("data/BR_Municipios_2023.topojson"),
     d3.json("data/BR_UF_2023.topojson"),
-    ...variaveisSelecionadas.map(v => d3.json(`data/${v}_${periodo}.json`))
+    d3.json(`data/${variavel}_${periodo}.json`)
   ];
 
-  Promise.all(promessas).then(([topoMun, topoUF, ...camadas]) => {
+  Promise.all(promessas).then(([topoMun, topoUF, dados]) => {
     const geojsonMun = topojson.feature(topoMun, topoMun.objects.BR_Municipios_2023);
     const geojsonUF = topojson.feature(topoUF, topoUF.objects.BR_UF_2023);
 
     const projection = d3.geoIdentity().reflectY(true).fitSize([width, height], geojsonMun);
     const path = d3.geoPath().projection(projection);
 
-    camadas.forEach((dados, i) => {
-      const dadosPorCod = {};
-      dados.forEach(d => {
-        const cod = String(d.cod_ibge).replace(/^0+/, '');
-        dadosPorCod[cod] = d.categoria;
-      });
-
-      g.append("g")
-        .selectAll("path")
-        .data(geojsonMun.features)
-        .join("path")
-        .attr("d", path)
-        .attr("fill", d => {
-          const cod = String(d.properties.CD_MUN6);
-          const cat = dadosPorCod[cod] || "Sem dados";
-          return categoriaCores[cat] || "lightgray";
-        })
-        .attr("stroke", "#333")
-        .attr("stroke-width", 0.2)
-        .append("title")
-        .text(d => {
-          const nome = d.properties.NM_MUN || "Município";
-          const cod = String(d.properties.CD_MUN6);
-          const cat = dadosPorCod[cod] || "Sem dados";
-          return `${nome}\n${cat}`;
-        });
+    const dadosPorCod = {};
+    dados.forEach(d => {
+      const cod = String(d.cod_ibge).replace(/^0+/, '');
+      dadosPorCod[cod] = d.categoria;
     });
+
+    g.append("g")
+      .selectAll("path")
+      .data(geojsonMun.features)
+      .join("path")
+      .attr("d", path)
+      .attr("fill", d => {
+        const cod = String(d.properties.CD_MUN6);
+        const cat = dadosPorCod[cod] || "Sem dados";
+        return categoriaCores[cat] || "lightgray";
+      })
+      .attr("stroke", "#333")
+      .attr("stroke-width", 0.2)
+      .append("title")
+      .text(d => {
+        const nome = d.properties.NM_MUN || "Município";
+        const cod = String(d.properties.CD_MUN6);
+        const cat = dadosPorCod[cod] || "Sem dados";
+        return `${nome}\n${cat}`;
+      });
 
     g.append("g")
       .selectAll("path")
@@ -95,66 +133,76 @@ function atualizarMapa() {
       .attr("stroke", "#000")
       .attr("stroke-width", 1.2);
 
-    desenharLegenda();
+    desenharLegenda(configuracao, variavel);
   });
 }
 
-function desenharLegenda() {
+function desenharLegenda(configuracao, variavelSelecionada) {
   const container = d3.select("#legenda");
   container.selectAll("*").remove();
 
-  const variaveisSelecionadas = Array.from(document.getElementById("variavel-select").selectedOptions)
-    .map(o => o.value);
+  let categoriasFiltradas = [];
 
-  const correspondencias = {
-    "PRISOES": "prisões",
-    "PPRF": "pprf",
-    "MOTOS": "veículos",
-    "ONIBUS": "veículos",
-    "UTILITARIOS": "veículos"
-  };
+  if (configuracao === "correlacao") {
+    categoriasFiltradas = [
+      ["Abaixo / Abaixo", categoriaCores["Abaixo / Abaixo"]],
+      ["Abaixo / Acima", categoriaCores["Abaixo / Acima"]],
+      ["Acima / Abaixo", categoriaCores["Acima / Abaixo"]],
+      ["Acima / Acima", categoriaCores["Acima / Acima"]],
+      ["Sem dados", categoriaCores["Sem dados"]]
+    ];
+  } else {
+    const correspondencias = {
+      "PRISOES": "prisões",
+      "PPRF": "pprf",
+      "MOTOS": "veículos",
+      "ONIBUS": "veículos",
+      "UTILITARIOS": "veículos"
+    };
 
-  const labelPersonalizada = {
-    "MOTOS": "motos",
-    "ONIBUS": "ônibus",
-    "UTILITARIOS": "utilitários"
-  };
+    const labelPersonalizada = {
+      "MOTOS": "motos",
+      "ONIBUS": "ônibus",
+      "UTILITARIOS": "utilitários"
+    };
 
-  const veiculosSelecionados = variaveisSelecionadas.filter(v => ["MOTOS", "ONIBUS", "UTILITARIOS"].includes(v));
-  const termoVeiculo = veiculosSelecionados.length === 1 ? labelPersonalizada[veiculosSelecionados[0]] : "veículos";
+    const termoVeiculo = labelPersonalizada[variavelSelecionada] || "veículos";
+    const termo = correspondencias[variavelSelecionada] || "";
 
-  const termosSelecionados = new Set();
-  variaveisSelecionadas.forEach(v => {
-    if (correspondencias[v]) {
-      termosSelecionados.add(correspondencias[v]);
-    }
-  });
+    categoriasFiltradas = Object.entries(categoriaCores).filter(([nome]) => {
+      const lower = nome.toLowerCase();
+      const ehGenerica =
+        !lower.includes("pprf") &&
+        !lower.includes("prisões") &&
+        !lower.includes("veículos");
 
-  const categoriasFiltradas = Object.entries(categoriaCores).filter(([nome]) => {
-    const lower = nome.toLowerCase();
-    const ehGenerica =
-      !lower.includes("pprf") &&
-      !lower.includes("prisões") &&
-      !lower.includes("veículos");
+      const ehRelevante = termo && lower.includes(termo);
 
-    const ehRelevante =
-      Array.from(termosSelecionados).some(termo => lower.includes(termo));
-
-    return ehGenerica || ehRelevante;
-  });
+      return ehGenerica || ehRelevante;
+    }).map(([categoria, cor]) => {
+      const rotulo = categoria.replace("veículos", termoVeiculo);
+      return [rotulo, cor];
+    });
+  }
 
   categoriasFiltradas.forEach(([categoria, cor]) => {
-    const rotulo = categoria.replace("veículos", termoVeiculo);
     const item = container.append("div").attr("class", "legenda-item");
     item.append("div")
       .attr("class", "legenda-cor")
       .style("background-color", cor);
-    item.append("span").text(rotulo);
+    item.append("span").text(categoria);
   });
 }
 
+// Eventos
+document.getElementById("configuracao-select").addEventListener("change", () => {
+  inicializarSelects();
+  atualizarMapa();
+});
+
 document.getElementById("variavel-select").addEventListener("change", atualizarMapa);
 document.getElementById("periodo-select").addEventListener("change", atualizarMapa);
-document.getElementById("configuracao-select")?.addEventListener("change", atualizarMapa);
 
+// Inicialização
+inicializarSelects();
 atualizarMapa();
