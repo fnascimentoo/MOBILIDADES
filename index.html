@@ -6,48 +6,6 @@
   <link rel="stylesheet" href="css/estilo.css" />
   <script src="https://d3js.org/d3.v7.min.js"></script>
   <script src="https://unpkg.com/topojson-client@3"></script>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      margin: 20px;
-    }
-    #controls {
-      margin-bottom: 10px;
-    }
-    #mapa {
-      border: 1px solid #ccc;
-    }
-
-    #container-mapa {
-      position: relative;
-      width: fit-content;
-    }
-
-    .legenda {
-      position: absolute;
-      top: 410px;
-      left: 980px;
-      font-size: 12px;
-      padding: 10px 15px;
-      background: white;
-      border: 1px solid #ddd;
-      white-space: nowrap;
-      box-shadow: 0px 0px 5px rgba(0,0,0,0.1);
-    }
-
-    .legenda-item {
-      display: flex;
-      align-items: center;
-      margin-bottom: 5px;
-    }
-    .legenda-cor {
-      width: 20px;
-      height: 20px;
-      margin-right: 8px;
-      border: 1px solid #999;
-      opacity: 1; /* transparência */
-    }
-  </style>
 </head>
 <body>
 
@@ -55,7 +13,6 @@
 
   <div id="container-mapa">
 
-    <!-- Painel lateral com controles -->
     <div id="painel-lateral">
       <div id="controls">
         <!-- Configuração -->
@@ -77,9 +34,7 @@
       <div class="legenda" id="legenda"></div>
     </div>
 
-    <!-- Mapa SVG -->
     <svg id="mapa" width="960" height="700"></svg>
-
   </div>
 
   <script src="js/mapa.js"></script>
