@@ -61,7 +61,7 @@ function inicializarSelects() {
 
   const variavelSelect = document.getElementById("variavel-select");
   variavelSelect.innerHTML = "";
-  variaveisPorConfiguracao[configuracao].((v) => {
+  variaveisPorConfiguracao[configuracao].forEach((v) => {
     const opt = document.createElement("option");
     opt.value = v;
     opt.textContent = v;
@@ -70,7 +70,7 @@ function inicializarSelects() {
 
   const periodoSelect = document.getElementById("periodo-select");
   periodoSelect.innerHTML = "";
-  periodosPorConfiguracao[configuracao].((p) => {
+  periodosPorConfiguracao[configuracao].forEach((p) => {
     const opt = document.createElement("option");
     opt.value = p.value;
     opt.textContent = p.label;
@@ -111,7 +111,7 @@ function atualizarMapa() {
       .join("path")
       .attr("d", path)
       .attr("fill", (d) => {
-        const cod = String(d.properties.CD_MUN6);
+        const cod = String(d.properties.CD_MUN6).padStart(6, "0");
         const cat = dadosPorCod[cod] || "Sem dados";
         return categoriaCores[cat] || "lightgray";
       })
