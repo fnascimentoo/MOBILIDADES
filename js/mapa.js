@@ -1,4 +1,3 @@
-
 const categoriaCores = {
   "Aumentou (ambos)": "#9f1127",
   "Aumentou (homicídios)": "#df755d",
@@ -28,6 +27,17 @@ const categoriaCoresCorrelacao = {
   "Sem dados": "lightgray"
 };
 
+const configuracoes = {
+  variacao: {
+    variaveis: ["PRISOES", "PPRF", "MOTOS", "ONIBUS", "UTILITARIOS"],
+    periodos: ["2000_2010", "2010_2022"]
+  },
+  correlacao: {
+    variaveis: ["DIESEL", "GASOLINA"],
+    periodos: ["2000", "2010", "2022"]
+  }
+};
+
 const svg = d3.select("#mapa");
 const width = +svg.attr("width");
 const height = +svg.attr("height");
@@ -41,78 +51,48 @@ const zoom = d3.zoom()
 
 svg.call(zoom);
 
-// Opções fixas
-const opcoesVariacao = [
-  { value: "PRISOES", label: "Prisões" },
-  { value: "PPRF", label: "PPRF" },
-  { value: "MOTOS", label: "Motos" },
-  { value: "ONIBUS", label: "Ônibus" },
-  { value: "UTILITARIOS", label: "Utilitários" },
-  { value: "DIESEL", label: "Diesel" },
-  { value: "GASOLINA", label: "Gasolina" }
-];
-
-const opcoesCorrelacao = [
-  { value: "DIESEL", label: "Diesel" },
-  { value: "GASOLINA", label: "Gasolina" }
-];
-
-const periodosVariacao = [
-  { value: "2000_2010", label: "2000/2001 a 2010" },
-  { value: "2010_2022", label: "2010 a 2022" }
-];
-
-const periodosCorrelacao = [
-  { value: "2000", label: "2000" },
-  { value: "2010", label: "2010" },
-  { value: "2022", label: "2022" }
-];
-
-function atualizarSelect(id, opcoes) {
-  const select = document.getElementById(id);
-  select.innerHTML = "";
-  opcoes.forEach(opt => {
-    const option = document.createElement("option");
-    option.value = opt.value;
-    option.text = opt.label;
-    select.appendChild(option);
-  });
-}
-
 function atualizarControles() {
   const configuracao = document.getElementById("configuracao-select").value;
+  const variaveis = configuracoes[configuracao].variaveis;
+  const periodos = configuracoes[configuracao].periodos;
 
-  if (configuracao === "correlacao") {
-    atualizarSelect("variavel-select", opcoesCorrelacao);
-    atualizarSelect("periodo-select", periodosCorrelacao);
-  } else {
-    atualizarSelect("variavel-select", opcoesVariacao);
-    atualizarSelect("periodo-select", periodosVariacao);
-  }
+  const variavelSelect = document.getElementById("variavel-select");
+  const periodoSelect = document.getElementById("periodo-select");
 
-  atualizarMapa();
+  variavelSelect.innerHTML = "";
+  periodoSelect.innerHTML = "";
+
+  variaveis.forEach(v => {
+    const opt = document.createElement("option");
+    opt.value = v;
+    opt.textContent = v.charAt(0) + v.slice(1).toLowerCase();
+    variavelSelect.appendChild(opt);
+  });
+
+  periodos.forEach(p => {
+    const opt = document.createElement("option");
+    opt.value = p;
+    opt.textContent = configuracao === "correlacao" ? p : (p === "2000_2010" ? "2000/2001 a 2010" : "2010 a 2022");
+    periodoSelect.appendChild(opt);
+  });
 }
 
 function atualizarMapa() {
   g.selectAll("*").remove();
 
   const configuracao = document.getElementById("configuracao-select").value;
-  const periodo = document.getElementById("periodo-select").value;
   const variavel = document.getElementById("variavel-select").value;
-  if (!variavel || !periodo) return;
+  const periodo = document.getElementById("periodo-select").value;
 
   const promessas = [
     d3.json("data/BR_Municipios_2023.topojson"),
     d3.json("data/BR_UF_2023.topojson"),
-    (configuracao === "correlacao")
-      ? d3.json(`data/${variavel}_CORR_${periodo}.json`)
-      : d3.json(`data/${variavel}_${periodo}.json`)
+    d3.json(`data/${variavel}_${periodo}.json`)
   ];
 
   Promise.all(promessas).then(([topoMun, topoUF, dados]) => {
     const geojsonMun = topojson.feature(topoMun, topoMun.objects.BR_Municipios_2023);
     const geojsonUF = topojson.feature(topoUF, topoUF.objects.BR_UF_2023);
-
     const projection = d3.geoIdentity().reflectY(true).fitSize([width, height], geojsonMun);
     const path = d3.geoPath().projection(projection);
 
@@ -122,8 +102,6 @@ function atualizarMapa() {
       dadosPorCod[cod] = d.categoria;
     });
 
-    const paleta = configuracao === "correlacao" ? categoriaCoresCorrelacao : categoriaCores;
-
     g.append("g")
       .selectAll("path")
       .data(geojsonMun.features)
@@ -132,7 +110,7 @@ function atualizarMapa() {
       .attr("fill", d => {
         const cod = String(d.properties.CD_MUN6);
         const cat = dadosPorCod[cod] || "Sem dados";
-        return paleta[cat] || "lightgray";
+        return (configuracao === "correlacao" ? categoriaCoresCorrelacao[cat] : categoriaCores[cat]) || "lightgray";
       })
       .attr("stroke", "#333")
       .attr("stroke-width", 0.2)
@@ -173,6 +151,14 @@ function desenharLegenda(configuracao, variavel) {
   const correspondencias = {
     "PRISOES": "prisões",
     "PPRF": "pprf",
+    "MOTOS": "veículos",
+    "ONIBUS": "veículos",
+    "UTILITARIOS": "veículos",
+    "DIESEL": "veículos",
+    "GASOLINA": "veículos"
+  };
+
+  const labelPersonalizada = {
     "MOTOS": "motos",
     "ONIBUS": "ônibus",
     "UTILITARIOS": "utilitários",
@@ -181,17 +167,39 @@ function desenharLegenda(configuracao, variavel) {
   };
 
   const termo = correspondencias[variavel] || "variável";
+  const substituto = labelPersonalizada[variavel] || termo;
+
+  const categoriasFiltradas = new Set();
 
   Object.entries(categoriaCores).forEach(([categoria, cor]) => {
-    const rotulo = categoria.replace("veículos", termo);
+    const catLower = categoria.toLowerCase();
+    const termoLower = termo.toLowerCase();
+
+    const ehGenerica =
+      !catLower.includes("pprf") &&
+      !catLower.includes("prisões") &&
+      !catLower.includes("veículos");
+
+    const ehCorreta = catLower.includes(termoLower);
+
+    if (ehGenerica || ehCorreta) {
+      categoriasFiltradas.add([categoria.replace("veículos", substituto), cor]);
+    }
+  });
+
+  Array.from(categoriasFiltradas).forEach(([categoria, cor]) => {
     const item = container.append("div").attr("class", "legenda-item");
     item.append("div").attr("class", "legenda-cor").style("background-color", cor);
-    item.append("span").text(rotulo);
+    item.append("span").text(categoria);
   });
 }
 
-document.getElementById("configuracao-select").addEventListener("change", atualizarControles);
+document.getElementById("configuracao-select").addEventListener("change", () => {
+  atualizarControles();
+  atualizarMapa();
+});
 document.getElementById("variavel-select").addEventListener("change", atualizarMapa);
 document.getElementById("periodo-select").addEventListener("change", atualizarMapa);
 
 atualizarControles();
+atualizarMapa();
