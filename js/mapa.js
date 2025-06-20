@@ -143,7 +143,6 @@ function desenharLegenda(configuracao, variavel) {
   container.selectAll("*").remove();
 
   if (configuracao === "correlacao") {
-    // Legenda Fixa para Correlação
     const legendaCorrelacao = {
       "Abaixo / Abaixo": "#3c78d8",
       "Abaixo / Acima": "#16a765",
@@ -161,7 +160,6 @@ function desenharLegenda(configuracao, variavel) {
     });
 
   } else if (configuracao === "variacao") {
-    // Legenda Filtrada para Variação
     const correspondencias = {
       PRISOES: "prisões",
       PPRF: "pprf",
@@ -176,37 +174,39 @@ function desenharLegenda(configuracao, variavel) {
       UTILITARIOS: "utilitários"
     };
 
-    const termoBase = correspondencias[variavel];
-    const termoEspecifico = labelPersonalizada[variavel] || termoBase;
+    const termo = correspondencias[variavel];
+    const termoEspecifico = labelPersonalizada[variavel] || termo;
 
-    const categoriasFiltradas = Object.entries(categoriaCores).filter(([categoria]) => {
-      const ehCorrelacao = categoria.includes(" / ");
-      if (ehCorrelacao) return false; // exclui categorias de correlação
+    const categoriasIncluidas = new Set();
 
-      if (!termoBase) return true; // inclui categorias genéricas se não houver termo base
+    Object.entries(categoriaCores).forEach(([categoria, cor]) => {
+      // Ignora categorias de correlação
+      if (categoria.includes(" / ") && !categoria.includes("homicídios")) return;
 
       const categoriaLower = categoria.toLowerCase();
-      const termoLower = termoBase.toLowerCase();
 
-      // inclui se for genérica ou relacionada à variável
-      const generica = !categoriaLower.includes("pprf") &&
-                       !categoriaLower.includes("prisões") &&
-                       !categoriaLower.includes("veículos");
-      const relacionada = categoriaLower.includes(termoLower);
+      const isGenerica =
+        !categoriaLower.includes("pprf") &&
+        !categoriaLower.includes("prisões") &&
+        !categoriaLower.includes("veículos");
 
-      return generica || relacionada;
+      const isRelacionada =
+        termo && categoriaLower.includes(termo.toLowerCase());
+
+      if (isGenerica || isRelacionada) {
+        if (!categoriasIncluidas.has(categoria)) {
+          categoriasIncluidas.add(categoria);
+          const rotulo = categoria.replace("veículos", termoEspecifico);
+          const item = container.append("div").attr("class", "legenda-item");
+          item.append("div")
+            .attr("class", "legenda-cor")
+            .style("background-color", cor);
+          item.append("span").text(rotulo);
+        }
+      }
     });
 
-    categoriasFiltradas.forEach(([categoria, cor]) => {
-      const rotulo = categoria.replace("veículos", termoEspecifico);
-      const item = container.append("div").attr("class", "legenda-item");
-      item.append("div")
-        .attr("class", "legenda-cor")
-        .style("background-color", cor);
-      item.append("span").text(rotulo);
-    });
-
-    // Garante exibição de "Sem dados"
+    // Adiciona manualmente "Sem dados"
     const item = container.append("div").attr("class", "legenda-item");
     item.append("div")
       .attr("class", "legenda-cor")
@@ -214,9 +214,6 @@ function desenharLegenda(configuracao, variavel) {
     item.append("span").text("Sem dados");
   }
 }
-
-
-
 // Eventos
 document.getElementById("configuracao-select").addEventListener("change", () => {
   inicializarSelects();
