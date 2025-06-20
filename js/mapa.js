@@ -17,11 +17,14 @@ const categoriaCores = {
   "Diminuiu (veículos)": "#5aa2c9",
   "Diminuiu (prisões)": "#5aa2c9",
   "Diminuiu (ambos)": "#185898",
+
   // Correlação
   "Abaixo / Abaixo": "#3c78d8",
   "Abaixo / Acima": "#16a765",
   "Acima / Abaixo": "#ffad46",
   "Acima / Acima": "#fb4c2f",
+
+  // Comum
   "Sem dados": "lightgray"
 };
 
@@ -30,25 +33,23 @@ const width = +svg.attr("width");
 const height = +svg.attr("height");
 let g = svg.append("g");
 
-const zoom = d3.zoom()
-  .scaleExtent([1, 10])
-  .on("zoom", (event) => {
+svg.call(
+  d3.zoom().scaleExtent([1, 10]).on("zoom", (event) => {
     g.attr("transform", event.transform);
-  });
-
-svg.call(zoom);
+  })
+);
 
 const variaveisPorConfiguracao = {
-  "variacao": ["PRISOES", "PPRF", "MOTOS", "ONIBUS", "UTILITARIOS"],
-  "correlacao": ["DIESEL", "GASOLINA"]
+  variacao: ["PRISOES", "PPRF", "MOTOS", "ONIBUS", "UTILITARIOS"],
+  correlacao: ["DIESEL", "GASOLINA"]
 };
 
 const periodosPorConfiguracao = {
-  "variacao": [
+  variacao: [
     { value: "2000_2010", label: "2000/2001 a 2010" },
     { value: "2010_2022", label: "2010 a 2022" }
   ],
-  "correlacao": [
+  correlacao: [
     { value: "2000", label: "2000" },
     { value: "2010", label: "2010" },
     { value: "2022", label: "2022" }
@@ -60,7 +61,7 @@ function inicializarSelects() {
 
   const variavelSelect = document.getElementById("variavel-select");
   variavelSelect.innerHTML = "";
-  variaveisPorConfiguracao[configuracao].forEach(v => {
+  variaveisPorConfiguracao[configuracao].forEach((v) => {
     const opt = document.createElement("option");
     opt.value = v;
     opt.textContent = v;
@@ -69,7 +70,7 @@ function inicializarSelects() {
 
   const periodoSelect = document.getElementById("periodo-select");
   periodoSelect.innerHTML = "";
-  periodosPorConfiguracao[configuracao].forEach(p => {
+  periodosPorConfiguracao[configuracao].forEach((p) => {
     const opt = document.createElement("option");
     opt.value = p.value;
     opt.textContent = p.label;
@@ -99,8 +100,8 @@ function atualizarMapa() {
     const path = d3.geoPath().projection(projection);
 
     const dadosPorCod = {};
-    dados.forEach(d => {
-      const cod = String(d.cod_ibge).replace(/^0+/, '');
+    dados.forEach((d) => {
+      const cod = String(d.cod_ibge).replace(/^0+/, "");
       dadosPorCod[cod] = d.categoria;
     });
 
@@ -109,7 +110,7 @@ function atualizarMapa() {
       .data(geojsonMun.features)
       .join("path")
       .attr("d", path)
-      .attr("fill", d => {
+      .attr("fill", (d) => {
         const cod = String(d.properties.CD_MUN6);
         const cat = dadosPorCod[cod] || "Sem dados";
         return categoriaCores[cat] || "lightgray";
@@ -117,7 +118,7 @@ function atualizarMapa() {
       .attr("stroke", "#333")
       .attr("stroke-width", 0.2)
       .append("title")
-      .text(d => {
+      .text((d) => {
         const nome = d.properties.NM_MUN || "Município";
         const cod = String(d.properties.CD_MUN6);
         const cat = dadosPorCod[cod] || "Sem dados";
@@ -137,73 +138,51 @@ function atualizarMapa() {
   });
 }
 
-function desenharLegenda() {
+function desenharLegenda(configuracao, variavel) {
   const container = d3.select("#legenda");
   container.selectAll("*").remove();
 
-  const configuracao = document.getElementById("configuracao-select")?.value || "variacao";
-  const variaveisSelecionadas = Array.from(document.getElementById("variavel-select").selectedOptions).map(o => o.value);
-
   if (configuracao === "correlacao") {
-    // Legenda específica de correlação
-    const legendaCorrelacao = {
-      "Abaixo / Abaixo": "#3c78d8",
-      "Abaixo / Acima": "#16a765",
-      "Acima / Abaixo": "#ffad46",
-      "Acima / Acima": "#fb4c2f",
-      "Sem dados": "lightgray"
-    };
-
-    Object.entries(legendaCorrelacao).forEach(([categoria, cor]) => {
+    const legendaCorrelacao = [
+      "Abaixo / Abaixo",
+      "Abaixo / Acima",
+      "Acima / Abaixo",
+      "Acima / Acima",
+      "Sem dados"
+    ];
+    legendaCorrelacao.forEach((categoria) => {
       const item = container.append("div").attr("class", "legenda-item");
       item.append("div")
         .attr("class", "legenda-cor")
-        .style("background-color", cor);
+        .style("background-color", categoriaCores[categoria]);
       item.append("span").text(categoria);
     });
-
   } else {
-    // Legenda específica de variação
     const correspondencias = {
-      "PRISOES": "prisões",
-      "PPRF": "pprf",
-      "MOTOS": "veículos",
-      "ONIBUS": "veículos",
-      "UTILITARIOS": "veículos"
+      PRISOES: "prisões",
+      PPRF: "pprf",
+      MOTOS: "veículos",
+      ONIBUS: "veículos",
+      UTILITARIOS: "veículos"
     };
-
     const labelPersonalizada = {
-      "MOTOS": "motos",
-      "ONIBUS": "ônibus",
-      "UTILITARIOS": "utilitários"
+      MOTOS: "motos",
+      ONIBUS: "ônibus",
+      UTILITARIOS: "utilitários"
     };
 
-    const veiculosSelecionados = variaveisSelecionadas.filter(v => ["MOTOS", "ONIBUS", "UTILITARIOS"].includes(v));
-    const termoVeiculo = veiculosSelecionados.length === 1 ? labelPersonalizada[veiculosSelecionados[0]] : "veículos";
-
-    const termosSelecionados = new Set();
-    variaveisSelecionadas.forEach(v => {
-      if (correspondencias[v]) {
-        termosSelecionados.add(correspondencias[v]);
-      }
-    });
+    const termo = correspondencias[variavel];
+    const termoEspecifico = labelPersonalizada[variavel] || termo;
 
     const categoriasFiltradas = Object.entries(categoriaCores).filter(([nome]) => {
       const lower = nome.toLowerCase();
-
-      const ehGenerica =
-        !lower.includes("pprf") &&
-        !lower.includes("prisões") &&
-        !lower.includes("veículos");
-
-      const ehRelevante =
-        Array.from(termosSelecionados).some(termo => lower.includes(termo));
-
-      return ehGenerica || ehRelevante;
+      const ehGenerica = !lower.includes("pprf") && !lower.includes("prisões") && !lower.includes("veículos");
+      const ehRelacionada = lower.includes(termo);
+      return ehGenerica || ehRelacionada;
     });
 
     categoriasFiltradas.forEach(([categoria, cor]) => {
-      const rotulo = categoria.replace("veículos", termoVeiculo);
+      const rotulo = categoria.replace("veículos", termoEspecifico);
       const item = container.append("div").attr("class", "legenda-item");
       item.append("div")
         .attr("class", "legenda-cor")
@@ -213,15 +192,12 @@ function desenharLegenda() {
   }
 }
 
-// Eventos
 document.getElementById("configuracao-select").addEventListener("change", () => {
   inicializarSelects();
   atualizarMapa();
 });
-
 document.getElementById("variavel-select").addEventListener("change", atualizarMapa);
 document.getElementById("periodo-select").addEventListener("change", atualizarMapa);
 
-// Inicialização
 inicializarSelects();
 atualizarMapa();
