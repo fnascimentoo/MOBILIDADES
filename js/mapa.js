@@ -143,6 +143,7 @@ function desenharLegenda(configuracao, variavel) {
   container.selectAll("*").remove();
 
   if (configuracao === "correlacao") {
+    // Legenda Fixa para Correlação
     const legendaCorrelacao = {
       "Abaixo / Abaixo": "#3c78d8",
       "Abaixo / Acima": "#16a765",
@@ -153,11 +154,14 @@ function desenharLegenda(configuracao, variavel) {
 
     Object.entries(legendaCorrelacao).forEach(([categoria, cor]) => {
       const item = container.append("div").attr("class", "legenda-item");
-      item.append("div").attr("class", "legenda-cor").style("background-color", cor);
+      item.append("div")
+        .attr("class", "legenda-cor")
+        .style("background-color", cor);
       item.append("span").text(categoria);
     });
 
   } else if (configuracao === "variacao") {
+    // Legenda Filtrada para Variação
     const correspondencias = {
       PRISOES: "prisões",
       PPRF: "pprf",
@@ -172,36 +176,45 @@ function desenharLegenda(configuracao, variavel) {
       UTILITARIOS: "utilitários"
     };
 
-    const termo = correspondencias[variavel];
-    const termoEspecifico = labelPersonalizada[variavel] || termo;
+    const termoBase = correspondencias[variavel];
+    const termoEspecifico = labelPersonalizada[variavel] || termoBase;
 
-    const categoriasFiltradas = Object.entries(categoriaCores).filter(([nome]) => {
-      const lower = nome.toLowerCase();
-      const ehDaVariacao =
-        !nome.includes("Acima /") && !nome.includes("Abaixo /") && nome !== "Sem dados";
-      const ehRelacionada =
-        ehDaVariacao &&
-        (
-          !nome.toLowerCase().includes("veículos") ||
-          (termo && nome.toLowerCase().includes(termo))
-        );
+    const categoriasFiltradas = Object.entries(categoriaCores).filter(([categoria]) => {
+      const ehCorrelacao = categoria.includes(" / ");
+      if (ehCorrelacao) return false; // exclui categorias de correlação
 
-      return ehRelacionada;
+      if (!termoBase) return true; // inclui categorias genéricas se não houver termo base
+
+      const categoriaLower = categoria.toLowerCase();
+      const termoLower = termoBase.toLowerCase();
+
+      // inclui se for genérica ou relacionada à variável
+      const generica = !categoriaLower.includes("pprf") &&
+                       !categoriaLower.includes("prisões") &&
+                       !categoriaLower.includes("veículos");
+      const relacionada = categoriaLower.includes(termoLower);
+
+      return generica || relacionada;
     });
 
     categoriasFiltradas.forEach(([categoria, cor]) => {
       const rotulo = categoria.replace("veículos", termoEspecifico);
       const item = container.append("div").attr("class", "legenda-item");
-      item.append("div").attr("class", "legenda-cor").style("background-color", cor);
+      item.append("div")
+        .attr("class", "legenda-cor")
+        .style("background-color", cor);
       item.append("span").text(rotulo);
     });
 
-    // Garante que "Sem dados" apareça no fim
-    container.append("div").attr("class", "legenda-item")
-      .append("div").attr("class", "legenda-cor").style("background-color", "lightgray")
-      .node().parentNode.append("span").text("Sem dados");
+    // Garante exibição de "Sem dados"
+    const item = container.append("div").attr("class", "legenda-item");
+    item.append("div")
+      .attr("class", "legenda-cor")
+      .style("background-color", "lightgray");
+    item.append("span").text("Sem dados");
   }
 }
+
 
 
 // Eventos
