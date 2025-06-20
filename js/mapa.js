@@ -177,12 +177,16 @@ function desenharLegenda(configuracao, variavel) {
 
     const categoriasFiltradas = Object.entries(categoriaCores).filter(([nome]) => {
       const lower = nome.toLowerCase();
-      const ehGenerica =
-        !lower.includes("pprf") &&
-        !lower.includes("prisões") &&
-        !lower.includes("veículos");
-      const ehRelacionada = termo && lower.includes(termo);
-      return ehGenerica || ehRelacionada;
+      const ehDaVariacao =
+        !nome.includes("Acima /") && !nome.includes("Abaixo /") && nome !== "Sem dados";
+      const ehRelacionada =
+        ehDaVariacao &&
+        (
+          !nome.toLowerCase().includes("veículos") ||
+          (termo && nome.toLowerCase().includes(termo))
+        );
+
+      return ehRelacionada;
     });
 
     categoriasFiltradas.forEach(([categoria, cor]) => {
@@ -191,8 +195,14 @@ function desenharLegenda(configuracao, variavel) {
       item.append("div").attr("class", "legenda-cor").style("background-color", cor);
       item.append("span").text(rotulo);
     });
+
+    // Garante que "Sem dados" apareça no fim
+    container.append("div").attr("class", "legenda-item")
+      .append("div").attr("class", "legenda-cor").style("background-color", "lightgray")
+      .node().parentNode.append("span").text("Sem dados");
   }
 }
+
 
 // Eventos
 document.getElementById("configuracao-select").addEventListener("change", () => {
