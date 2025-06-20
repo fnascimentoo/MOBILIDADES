@@ -145,7 +145,7 @@ function desenharLegenda() {
   const variaveisSelecionadas = Array.from(document.getElementById("variavel-select").selectedOptions).map(o => o.value);
 
   if (configuracao === "correlacao") {
-    // Legenda específica para correlações
+    // Legenda específica de correlação
     const legendaCorrelacao = {
       "Abaixo / Abaixo": "#3c78d8",
       "Abaixo / Acima": "#16a765",
@@ -163,7 +163,7 @@ function desenharLegenda() {
     });
 
   } else {
-    // Legenda específica para variações
+    // Legenda específica de variação
     const correspondencias = {
       "PRISOES": "prisões",
       "PPRF": "pprf",
@@ -190,12 +190,15 @@ function desenharLegenda() {
 
     const categoriasFiltradas = Object.entries(categoriaCores).filter(([nome]) => {
       const lower = nome.toLowerCase();
+
       const ehGenerica =
         !lower.includes("pprf") &&
         !lower.includes("prisões") &&
         !lower.includes("veículos");
+
       const ehRelevante =
         Array.from(termosSelecionados).some(termo => lower.includes(termo));
+
       return ehGenerica || ehRelevante;
     });
 
