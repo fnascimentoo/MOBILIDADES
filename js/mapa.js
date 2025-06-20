@@ -134,30 +134,30 @@ function atualizarMapa() {
       .attr("stroke", "#000")
       .attr("stroke-width", 1.2);
 
-    desenharLegenda(configuracao, variavel);
-  });
-}
-
-function desenharLegenda(configuracao, variavel) {
+    function desenharLegenda(configuracao, variavel) {
   const container = d3.select("#legenda");
   container.selectAll("*").remove();
 
   if (configuracao === "correlacao") {
-    const legendaCorrelacao = [
-      "Abaixo / Abaixo",
-      "Abaixo / Acima",
-      "Acima / Abaixo",
-      "Acima / Acima",
-      "Sem dados"
-    ];
-    legendaCorrelacao.forEach((categoria) => {
+    // Legenda de correlação (fixa)
+    const legendaCorrelacao = {
+      "Abaixo / Abaixo": "#3c78d8",
+      "Abaixo / Acima": "#16a765",
+      "Acima / Abaixo": "#ffad46",
+      "Acima / Acima": "#fb4c2f",
+      "Sem dados": "lightgray"
+    };
+
+    Object.entries(legendaCorrelacao).forEach(([categoria, cor]) => {
       const item = container.append("div").attr("class", "legenda-item");
       item.append("div")
         .attr("class", "legenda-cor")
-        .style("background-color", categoriaCores[categoria]);
+        .style("background-color", cor);
       item.append("span").text(categoria);
     });
-  } else {
+
+  } else if (configuracao === "variacao") {
+    // Legenda dinâmica de variação
     const correspondencias = {
       PRISOES: "prisões",
       PPRF: "pprf",
@@ -165,6 +165,7 @@ function desenharLegenda(configuracao, variavel) {
       ONIBUS: "veículos",
       UTILITARIOS: "veículos"
     };
+
     const labelPersonalizada = {
       MOTOS: "motos",
       ONIBUS: "ônibus",
@@ -176,8 +177,11 @@ function desenharLegenda(configuracao, variavel) {
 
     const categoriasFiltradas = Object.entries(categoriaCores).filter(([nome]) => {
       const lower = nome.toLowerCase();
-      const ehGenerica = !lower.includes("pprf") && !lower.includes("prisões") && !lower.includes("veículos");
-      const ehRelacionada = lower.includes(termo);
+      const ehGenerica =
+        !lower.includes("pprf") &&
+        !lower.includes("prisões") &&
+        !lower.includes("veículos");
+      const ehRelacionada = termo && lower.includes(termo);
       return ehGenerica || ehRelacionada;
     });
 
@@ -191,6 +195,7 @@ function desenharLegenda(configuracao, variavel) {
     });
   }
 }
+
 
 document.getElementById("configuracao-select").addEventListener("change", () => {
   inicializarSelects();
