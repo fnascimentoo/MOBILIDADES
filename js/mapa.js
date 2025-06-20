@@ -101,7 +101,7 @@ function atualizarMapa() {
 
     const dadosPorCod = {};
     dados.forEach((d) => {
-      const cod = String(Math.trunc(Number(d.cod_ibge))).padStart(7, "0");
+      const cod = String(Math.trunc(Number(d.cod_ibge))).padStart(6, "0");
       dadosPorCod[cod] = d.categoria;
     });
 
