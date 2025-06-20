@@ -70,7 +70,7 @@ function inicializarSelects() {
 
   const periodoSelect = document.getElementById("periodo-select");
   periodoSelect.innerHTML = "";
-  periodosPorConfiguracao[configuracao].forEach((p) => {
+  periodosPorConfiguracao[configuracao].((p) => {
     const opt = document.createElement("option");
     opt.value = p.value;
     opt.textContent = p.label;
@@ -101,8 +101,7 @@ function atualizarMapa() {
 
     const dadosPorCod = {};
     dados.forEach((d) => {
-      const raw = typeof d.cod_ibge === "string" ? parseFloat(d.cod_ibge) : d.cod_ibge;
-      const cod = String(Math.trunc(raw)).padStart(7, "0");
+      const cod = String(Math.trunc(Number(d.cod_ibge))).padStart(7, "0");
       dadosPorCod[cod] = d.categoria;
     });
 
