@@ -134,12 +134,15 @@ function atualizarMapa() {
       .attr("stroke", "#000")
       .attr("stroke-width", 1.2);
 
-    function desenharLegenda(configuracao, variavel) {
+    desenharLegenda(configuracao, variavel);
+  });
+}
+
+function desenharLegenda(configuracao, variavel) {
   const container = d3.select("#legenda");
   container.selectAll("*").remove();
 
   if (configuracao === "correlacao") {
-    // Legenda de correlação (fixa)
     const legendaCorrelacao = {
       "Abaixo / Abaixo": "#3c78d8",
       "Abaixo / Acima": "#16a765",
@@ -150,9 +153,7 @@ function atualizarMapa() {
 
     Object.entries(legendaCorrelacao).forEach(([categoria, cor]) => {
       const item = container.append("div").attr("class", "legenda-item");
-      item.append("div")
-        .attr("class", "legenda-cor")
-        .style("background-color", cor);
+      item.append("div").attr("class", "legenda-cor").style("background-color", cor);
       item.append("span").text(categoria);
     });
 
@@ -171,35 +172,29 @@ function atualizarMapa() {
       UTILITARIOS: "utilitários"
     };
 
-    // Pega a variável selecionada
-    const variavel = document.getElementById("variavel-select").value;
-    const termo = correspondencias[variavel] || "";
+    const termo = correspondencias[variavel];
     const termoEspecifico = labelPersonalizada[variavel] || termo;
-
-    // Define quais categorias são genéricas e sempre devem aparecer
-    const categoriasComuns = ["ambos", "manteve", "sem dados"];
 
     const categoriasFiltradas = Object.entries(categoriaCores).filter(([nome]) => {
       const lower = nome.toLowerCase();
-
-      const pertenceCategoriaComum = categoriasComuns.some(cat => lower.includes(cat));
+      const ehGenerica =
+        !lower.includes("pprf") &&
+        !lower.includes("prisões") &&
+        !lower.includes("veículos");
       const ehRelacionada = termo && lower.includes(termo);
-
-      return pertenceCategoriaComum || ehRelacionada;
+      return ehGenerica || ehRelacionada;
     });
 
-    // Gera a legenda
     categoriasFiltradas.forEach(([categoria, cor]) => {
       const rotulo = categoria.replace("veículos", termoEspecifico);
       const item = container.append("div").attr("class", "legenda-item");
-      item.append("div")
-        .attr("class", "legenda-cor")
-        .style("background-color", cor);
+      item.append("div").attr("class", "legenda-cor").style("background-color", cor);
       item.append("span").text(rotulo);
     });
   }
+}
 
-
+// Eventos
 document.getElementById("configuracao-select").addEventListener("change", () => {
   inicializarSelects();
   atualizarMapa();
@@ -207,5 +202,6 @@ document.getElementById("configuracao-select").addEventListener("change", () => 
 document.getElementById("variavel-select").addEventListener("change", atualizarMapa);
 document.getElementById("periodo-select").addEventListener("change", atualizarMapa);
 
+// Inicialização
 inicializarSelects();
 atualizarMapa();
