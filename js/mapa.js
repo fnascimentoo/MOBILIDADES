@@ -176,14 +176,15 @@ function atualizarMapa() {
     const termoEspecifico = labelPersonalizada[variavel] || termo;
 
     const categoriasFiltradas = Object.entries(categoriaCores).filter(([nome]) => {
-      const lower = nome.toLowerCase();
-      const ehGenerica =
-        !lower.includes("pprf") &&
-        !lower.includes("prisões") &&
-        !lower.includes("veículos");
-      const ehRelacionada = termo && lower.includes(termo);
-      return ehGenerica || ehRelacionada;
-    });
+  const lower = nome.toLowerCase();
+
+  const categoriasComuns = ["ambos", "manteve", "sem dados"];
+  const pertenceCategoriaComum = categoriasComuns.some(cat => lower.includes(cat));
+
+  const ehRelacionada = termo && lower.includes(termo);
+
+  return pertenceCategoriaComum || ehRelacionada;
+});
 
     categoriasFiltradas.forEach(([categoria, cor]) => {
       const rotulo = categoria.replace("veículos", termoEspecifico);
