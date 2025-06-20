@@ -54,25 +54,21 @@
   <h2>MOBILIDADES - Mapa de consulta por municípios</h2>
 
   <div id="container-mapa">
-    <svg id="mapa" width="960" height="700"></svg>
-  
+
+    <!-- Painel lateral com controles -->
     <div id="painel-lateral">
       <div id="controls">
-  <!-- Configuração -->
+        <!-- Configuração -->
         <label for="configuracao-select">Configuração:</label>
         <select id="configuracao-select">
           <option value="variacao" selected>Variação</option>
           <option value="correlacao">Correlação</option>
         </select>
-      
-        <br><br>
-      
+
         <!-- Variável -->
         <label for="variavel-select">Variável:</label>
         <select id="variavel-select"></select>
-      
-        <br><br>
-      
+
         <!-- Período -->
         <label for="periodo-select">Período:</label>
         <select id="periodo-select"></select>
@@ -80,6 +76,10 @@
 
       <div class="legenda" id="legenda"></div>
     </div>
+
+    <!-- Mapa SVG -->
+    <svg id="mapa" width="960" height="700"></svg>
+
   </div>
 
   <script src="js/mapa.js"></script>
