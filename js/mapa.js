@@ -196,9 +196,13 @@ function desenharLegenda(configuracao, variavel) {
       const isRelacionada = termo && catLower.includes(termo.toLowerCase());
 
       if (isGenerica || isRelacionada || categoria === "Sem dados") {
-        if (!categoriasIncluidas.has(categoria)) {
-          categoriasIncluidas.add(categoria);
-          const rotulo = categoria.replace("veículos", termoEspecifico);
+          const rotulo = categoria === "Sem dados"
+            ? "Sem dados"
+            : categoria.replace("veículos", termoEspecifico);
+        
+          if (categoriasIncluidas.has(rotulo)) return;
+          categoriasIncluidas.add(rotulo);
+        
           const item = container.append("div").attr("class", "legenda-item");
           item.append("div")
             .attr("class", "legenda-cor")
