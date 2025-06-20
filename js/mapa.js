@@ -212,7 +212,7 @@ function desenharLegenda(configuracao, variavel) {
       }
     });
   }
-}
+
 
 // Eventos
 document.getElementById("configuracao-select").addEventListener("change", () => {
