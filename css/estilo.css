@@ -12,15 +12,18 @@ h2 {
   display: flex;
   position: relative;
   width: fit-content;
-  gap: 30px; /* espaço entre painel e mapa */
+  flex-direction: row-reverse; /* inverter mapa e painel lateral */
+  gap: 30px;
 }
 
 #painel-lateral {
   display: flex;
   flex-direction: column;
   gap: 20px;
+  align-items: flex-start;
   margin-top: 10px;
 }
+
 
 #controls {
   font-size: 12px;
