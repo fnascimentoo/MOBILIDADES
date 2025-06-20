@@ -157,7 +157,6 @@ function atualizarMapa() {
     });
 
   } else if (configuracao === "variacao") {
-    // Legenda dinâmica de variação
     const correspondencias = {
       PRISOES: "prisões",
       PPRF: "pprf",
@@ -172,20 +171,24 @@ function atualizarMapa() {
       UTILITARIOS: "utilitários"
     };
 
-    const termo = correspondencias[variavel];
+    // Pega a variável selecionada
+    const variavel = document.getElementById("variavel-select").value;
+    const termo = correspondencias[variavel] || "";
     const termoEspecifico = labelPersonalizada[variavel] || termo;
 
+    // Define quais categorias são genéricas e sempre devem aparecer
+    const categoriasComuns = ["ambos", "manteve", "sem dados"];
+
     const categoriasFiltradas = Object.entries(categoriaCores).filter(([nome]) => {
-  const lower = nome.toLowerCase();
+      const lower = nome.toLowerCase();
 
-  const categoriasComuns = ["ambos", "manteve", "sem dados"];
-  const pertenceCategoriaComum = categoriasComuns.some(cat => lower.includes(cat));
+      const pertenceCategoriaComum = categoriasComuns.some(cat => lower.includes(cat));
+      const ehRelacionada = termo && lower.includes(termo);
 
-  const ehRelacionada = termo && lower.includes(termo);
+      return pertenceCategoriaComum || ehRelacionada;
+    });
 
-  return pertenceCategoriaComum || ehRelacionada;
-});
-
+    // Gera a legenda
     categoriasFiltradas.forEach(([categoria, cor]) => {
       const rotulo = categoria.replace("veículos", termoEspecifico);
       const item = container.append("div").attr("class", "legenda-item");
@@ -195,7 +198,6 @@ function atualizarMapa() {
       item.append("span").text(rotulo);
     });
   }
-}
 
 
 document.getElementById("configuracao-select").addEventListener("change", () => {
