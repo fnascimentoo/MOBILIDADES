@@ -137,21 +137,33 @@ function atualizarMapa() {
   });
 }
 
-function desenharLegenda(configuracao, variavelSelecionada) {
+function desenharLegenda() {
   const container = d3.select("#legenda");
   container.selectAll("*").remove();
 
-  let categoriasFiltradas = [];
+  const configuracao = document.getElementById("configuracao-select")?.value || "variacao";
+  const variaveisSelecionadas = Array.from(document.getElementById("variavel-select").selectedOptions).map(o => o.value);
 
   if (configuracao === "correlacao") {
-    categoriasFiltradas = [
-      ["Abaixo / Abaixo", categoriaCores["Abaixo / Abaixo"]],
-      ["Abaixo / Acima", categoriaCores["Abaixo / Acima"]],
-      ["Acima / Abaixo", categoriaCores["Acima / Abaixo"]],
-      ["Acima / Acima", categoriaCores["Acima / Acima"]],
-      ["Sem dados", categoriaCores["Sem dados"]]
-    ];
+    // Legenda específica para correlações
+    const legendaCorrelacao = {
+      "Abaixo / Abaixo": "#3c78d8",
+      "Abaixo / Acima": "#16a765",
+      "Acima / Abaixo": "#ffad46",
+      "Acima / Acima": "#fb4c2f",
+      "Sem dados": "lightgray"
+    };
+
+    Object.entries(legendaCorrelacao).forEach(([categoria, cor]) => {
+      const item = container.append("div").attr("class", "legenda-item");
+      item.append("div")
+        .attr("class", "legenda-cor")
+        .style("background-color", cor);
+      item.append("span").text(categoria);
+    });
+
   } else {
+    // Legenda específica para variações
     const correspondencias = {
       "PRISOES": "prisões",
       "PPRF": "pprf",
@@ -166,32 +178,36 @@ function desenharLegenda(configuracao, variavelSelecionada) {
       "UTILITARIOS": "utilitários"
     };
 
-    const termoVeiculo = labelPersonalizada[variavelSelecionada] || "veículos";
-    const termo = correspondencias[variavelSelecionada] || "";
+    const veiculosSelecionados = variaveisSelecionadas.filter(v => ["MOTOS", "ONIBUS", "UTILITARIOS"].includes(v));
+    const termoVeiculo = veiculosSelecionados.length === 1 ? labelPersonalizada[veiculosSelecionados[0]] : "veículos";
 
-    categoriasFiltradas = Object.entries(categoriaCores).filter(([nome]) => {
+    const termosSelecionados = new Set();
+    variaveisSelecionadas.forEach(v => {
+      if (correspondencias[v]) {
+        termosSelecionados.add(correspondencias[v]);
+      }
+    });
+
+    const categoriasFiltradas = Object.entries(categoriaCores).filter(([nome]) => {
       const lower = nome.toLowerCase();
       const ehGenerica =
         !lower.includes("pprf") &&
         !lower.includes("prisões") &&
         !lower.includes("veículos");
-
-      const ehRelevante = termo && lower.includes(termo);
-
+      const ehRelevante =
+        Array.from(termosSelecionados).some(termo => lower.includes(termo));
       return ehGenerica || ehRelevante;
-    }).map(([categoria, cor]) => {
+    });
+
+    categoriasFiltradas.forEach(([categoria, cor]) => {
       const rotulo = categoria.replace("veículos", termoVeiculo);
-      return [rotulo, cor];
+      const item = container.append("div").attr("class", "legenda-item");
+      item.append("div")
+        .attr("class", "legenda-cor")
+        .style("background-color", cor);
+      item.append("span").text(rotulo);
     });
   }
-
-  categoriasFiltradas.forEach(([categoria, cor]) => {
-    const item = container.append("div").attr("class", "legenda-item");
-    item.append("div")
-      .attr("class", "legenda-cor")
-      .style("background-color", cor);
-    item.append("span").text(categoria);
-  });
 }
 
 // Eventos
